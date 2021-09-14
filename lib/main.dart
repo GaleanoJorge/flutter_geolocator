@@ -24,27 +24,14 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   late GoogleMapController mapController;
 
-  late GoogleMapController newGoogleMapController;
-
   final LatLng _center = const LatLng(4.65, -74.1);
 
   late Position currentPosition;
 
   var geolocator = Geolocator();
+  final Map<String, Marker> _markers = {};
 
-  void _onMapCreated(GoogleMapController controller) async {
-    mapController = controller;
-
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.best);
-    currentPosition = position;
-
-    LatLng latLngPosition = LatLng(position.latitude, position.longitude);
-
-    CameraPosition cameraPosition =
-        CameraPosition(target: latLngPosition, zoom: 11.0);
-    mapController.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
-  }
+  bool _visible = true;
 
   @override
   Widget build(BuildContext context) {
@@ -64,40 +51,103 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(key: const Key('BNB'), items: [
-        bottonItem(Icons.safety_divider, 'Home'),
-        bottonItem(Icons.menu_open, 'Agenda'),
-        bottonItem(Icons.vertical_align_bottom_outlined, 'Perfil'),
-      ],),
+      bottomNavigationBar: BottomNavigationBar(
+        key: const Key('BND'),
+        items: [
+          bottonItem(Icons.safety_divider, 'Home'),
+          bottonItem(Icons.menu_open, 'Agenda'),
+          bottonItem(Icons.vertical_align_bottom_outlined, 'Perfil'),
+        ],
+        onTap: (val) {
+          setState(() {
+            _visible = !_visible;
+          });
+          print(val);
+        },
+      ),
       // Api de maps
-      body: GoogleMap(
-          myLocationEnabled: true,
-          zoomGesturesEnabled: true,
-          zoomControlsEnabled: true,
-          myLocationButtonEnabled: false,
-          onMapCreated: _onMapCreated,
-          initialCameraPosition: CameraPosition(target: _center, zoom: 15.0)),
+      body: Stack(
+        children: [
+          GoogleMap(
+              myLocationEnabled: true,
+              zoomGesturesEnabled: true,
+              zoomControlsEnabled: true,
+              myLocationButtonEnabled: false,
+              onMapCreated: _onMapCreated,
+              markers: _markers.values.toSet(),
+              initialCameraPosition:
+                  CameraPosition(target: _center, zoom: 15.0)),
+          AnimatedOpacity(
+            opacity: _visible ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 500),
+            child: AlertDialog(
+              title: Text('Alerta'),
+              content: Text('Alerta de uso de Flutter'),
+              actions: [
+                FlatButton(
+                    onPressed: () {
+                      setState(() {
+                        _visible = !_visible;
+                      });
+                    },
+                    child: const Text('OK')),
+                FlatButton(
+                    onPressed: () {
+                      setState(() {
+                        _visible = !_visible;
+                      });
+                    },
+                    child: const Text('CERRAR')),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Padding drawerBoton(String message, IconData icon){
+  void _onMapCreated(GoogleMapController controller) async {
+    mapController = controller;
+
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best);
+    currentPosition = position;
+
+    LatLng latLngPosition = LatLng(position.latitude, position.longitude);
+
+    CameraPosition cameraPosition =
+        CameraPosition(target: latLngPosition, zoom: 16.0);
+    mapController.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+    _markers['Mi Ubicación'] = Marker(
+      markerId: const MarkerId('Mi Ubicación'),
+      position: latLngPosition,
+      infoWindow:
+          const InfoWindow(title: 'Mi Ubicación', snippet: 'Jorge Galeano'),
+    );
+  }
+
+  Padding drawerBoton(String message, IconData icon) {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       // ignore: deprecated_member_use
       child: FlatButton(
-        onPressed: (){},
+        onPressed: () {},
         child: Row(
           children: <Widget>[
             Icon(icon),
-            const SizedBox(width: 7.0,),
-            Text(message, style: const TextStyle(fontSize: 15.0),)
+            const SizedBox(
+              width: 7.0,
+            ),
+            Text(
+              message,
+              style: const TextStyle(fontSize: 15.0),
+            )
           ],
         ),
       ),
     );
   }
 
-  BottomNavigationBarItem bottonItem(IconData icon, String message) {
-    return BottomNavigationBarItem(icon: Icon(icon), label: message);
-  }
+  BottomNavigationBarItem bottonItem(IconData icon, String message) =>
+      BottomNavigationBarItem(icon: Icon(icon), label: message);
 }
