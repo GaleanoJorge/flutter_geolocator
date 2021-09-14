@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -31,7 +33,32 @@ class _MyHomePageState extends State<MyHomePage> {
   var geolocator = Geolocator();
   final Map<String, Marker> _markers = {};
 
-  bool _visible = true;
+  int _selectedIndex = 0;
+
+  // ignore: prefer_final_fields
+  List<Widget> _widgetOptions = <Widget>[
+    const Text(
+      '',
+      style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+    ),
+    Container(
+      color: Colors.black54,
+      child: AlertDialog(
+        title: const Text('Alerta'),
+        content: Text('Alerta de uso de Flutter en Agenda'),
+        actions: [
+          FlatButton(onPressed: () {}, child: const Text('OK')),
+          FlatButton(onPressed: () {}, child: const Text('CERRAR')),
+        ],
+      ),
+    ),
+    Image.network(
+        'https://ii.ct-stc.com/1/logos/empresas/2018/07/09/healthlife-sas-C338ED616469628A151449159thumbnail.png'),
+    const Text(
+      'Perfil',
+      style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -53,18 +80,26 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         key: const Key('BND'),
-        items: [
-          bottonItem(Icons.safety_divider, 'Home'),
-          bottonItem(Icons.menu_open, 'Agenda'),
-          bottonItem(Icons.vertical_align_bottom_outlined, 'Perfil'),
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey,
+        currentIndex: _selectedIndex,
+        items: <BottomNavigationBarItem>[
+          bottonItem(Icons.home, 'Inicio'),
+          bottonItem(Icons.calendar_today, 'Agenda'),
+          bottonItem(Icons.health_and_safety_outlined, 'Servicios'),
+          bottonItem(Icons.settings, 'Perfil'),
         ],
         onTap: (val) {
           setState(() {
-            _visible = !_visible;
+            _selectedIndex = val;
           });
-          print(val);
         },
       ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.message),
+        onPressed: () {},
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       // Api de maps
       body: Stack(
         children: [
@@ -77,30 +112,9 @@ class _MyHomePageState extends State<MyHomePage> {
               markers: _markers.values.toSet(),
               initialCameraPosition:
                   CameraPosition(target: _center, zoom: 15.0)),
-          AnimatedOpacity(
-            opacity: _visible ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 500),
-            child: AlertDialog(
-              title: Text('Alerta'),
-              content: Text('Alerta de uso de Flutter'),
-              actions: [
-                FlatButton(
-                    onPressed: () {
-                      setState(() {
-                        _visible = !_visible;
-                      });
-                    },
-                    child: const Text('OK')),
-                FlatButton(
-                    onPressed: () {
-                      setState(() {
-                        _visible = !_visible;
-                      });
-                    },
-                    child: const Text('CERRAR')),
-              ],
-            ),
-          ),
+          Center(
+            child: _widgetOptions.elementAt(_selectedIndex),
+          )
         ],
       ),
     );
@@ -118,12 +132,14 @@ class _MyHomePageState extends State<MyHomePage> {
     CameraPosition cameraPosition =
         CameraPosition(target: latLngPosition, zoom: 16.0);
     mapController.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
-    _markers['Mi Ubicación'] = Marker(
-      markerId: const MarkerId('Mi Ubicación'),
-      position: latLngPosition,
-      infoWindow:
-          const InfoWindow(title: 'Mi Ubicación', snippet: 'Jorge Galeano'),
-    );
+    setState(() {
+      _markers['Mi Ubicación'] = Marker(
+        markerId: const MarkerId('Mi Ubicación'),
+        position: latLngPosition,
+        infoWindow:
+            const InfoWindow(title: 'Mi Ubicación', snippet: 'Jorge Galeano'),
+      );
+    });
   }
 
   Padding drawerBoton(String message, IconData icon) {
@@ -149,5 +165,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   BottomNavigationBarItem bottonItem(IconData icon, String message) =>
-      BottomNavigationBarItem(icon: Icon(icon), label: message);
+      BottomNavigationBarItem(
+        icon: Icon(icon),
+        label: message,
+        backgroundColor: Colors.white,
+      );
 }
